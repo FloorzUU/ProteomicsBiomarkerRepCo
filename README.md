@@ -1,3 +1,6 @@
+Yoo this is the docuemntation i've tried to implement during the workshop
+
+
 # My Project
 
 This project template is a demonstration for the RepCo workshop.
