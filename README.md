@@ -1,46 +1,38 @@
-Yoo this is the docuemntation i've tried to implement during the workshop
+#ProteomicsBiomarkerRepCo 
+
+This repository includes all code written to ensable a report for my Major Research Internship. Which aims to identify all potential biomarkers for MACE within three years after surgery which an OLINK Explore plasma protein dataset. 
+
+## installation 
+--- detail installation and dependency requirements ---
+
+## Usage 
+
+In the main project file you can find scripts that do statistical testing anf further analysis for the large OLINK protein dataset. The testing was predominantly done for MACE, but tests were also performed for the transcriptome-defined clusters (Michals clusters) and the symptoms.
+
+In file: MainProject/ExecuteAnalysis all other scripts are called and run such that only the desired outputs are saved in the workspace, plot viewer, printed of saved in a designated results file on the computer.
+
+Each other script in this folder has a prefix with a description of what kind of analysis is performed within the script, it requires input and resulting output.
+
+In the side projects folder, some stored scripts which were not covered in the report (Admittedly symptoms and clusters aren't either). But were still part of the internship. All still using proteomics data as a basis. scripts in it cover topics like: Associations with methylation-based age, macrophages, a replicated pipeline of a previously published paper and machine learning patterns for those previously mentioned clusters.
 
 
-# My Project
+## Support 
 
-This project template is a demonstration for the RepCo workshop.
+In case of issues and/or questions running this code please contact: f.b.h.vanderzalm@umcutrecht.nl
 
-## Usage
+## Roadmap 
 
-Click "Use this template" at the top of this page to create a new repository with the same folder structure.
+In future updates code will be resturctured to include more functions
 
-## Project Structure
+## Contributing 
 
-The project structure distinguishes three kinds of folders:
-- read-only (RO): not edited by either code or researcher
-- human-writeable (HW): edited by the researcher only.
-- project-generated (PG): folders generated when running the code; these folders can be deleted or emptied and will be completely reconstituted as the project is run.
+Pull request are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
 
+## Licence 
 
-```
-.
-├── .gitignore
-├── CITATION.cff
-├── LICENSE
-├── README.md
-├── requirements.txt
-├── data               <- All project data, ignored by git
-│   ├── processed      <- The final, canonical data sets for modeling. (PG)
-│   ├── raw            <- The original, immutable data dump. (RO)
-│   └── temp           <- Intermediate data that has been transformed. (PG)
-├── docs               <- Documentation notebook for users (HW)
-│   ├── manuscript     <- Manuscript source, e.g., LaTeX, Markdown, etc. (HW)
-│   └── reports        <- Other project reports and notebooks (e.g. Jupyter, .Rmd) (HW)
-├── results
-│   ├── figures        <- Figures for the manuscript or reports (PG)
-│   └── output         <- Other output for the manuscript or reports (PG)
-└── R                  <- Source code for this project (HW)
+[MIT](https://choosealicense.com/licenses/mit/)
 
-```
+## Author and acknowledgements 
 
-## Add a citation file
-Create a citation file for your repository using [cffinit](https://citation-file-format.github.io/cff-initializer-javascript/#/)
-
-## License
-
-This project is licensed under the terms of the [MIT License](/LICENSE).
+Floor van der Zalm with acknowledgements of the contributions of my supervisor throughout this project; Michal Mokry. 
