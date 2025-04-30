@@ -64,7 +64,7 @@ GSEA_analysis <- function(data, test_results, subcategory = NULL){
                  toString(setdiff(names(geneList), df$gene_symbol))))
   df <- as.data.frame(df[ ,colnames(df) %in% c("gs_name", "gene_symbol")])
   
-  GSEA <- clusterProfiler::GSEA(geneList = geneList, TERM2GENE = df, pvalueCutoff = 0.05)
+  GSEA <- clusterProfiler::GSEA(geneList = geneList, TERM2GENE = df, pvalueCutoff = 0.05, seed = 1024)
   return(GSEA)
 }
 
@@ -140,9 +140,10 @@ parent.tbl_tree <- utils::getFromNamespace("parent.tbl_tree", "tidytree")
 pdf(file = paste(resultsFolder, "gseaTreePlot.pdf", sep = ""),
     width = 12, height = 5)
 p <- treeplot(gsea_resultsPairwise, cex_category = 0.7, 
-              group_color = c("#52B6A8", "#8ADBE6", "#6699FF", "#4472C4", "#9B8EDA"),
+              group_color = c("#52B6A8", "#8ADBE6", "#6699FF"),#, "#4472C4", "#9B8EDA"),
               fontsize = 2.5, label_format_tiplab = 200, cex_label_gene = 0.5, nWords = 1, 
               label_format = 0.6, legend = FALSE, showCategory = dim(gsea_results@result)[1]) 
 p$layers[[7]]$aes_params$size <- 2.7
 plot(p)
 dev.off()
+
