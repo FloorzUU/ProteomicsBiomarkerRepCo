@@ -11,47 +11,47 @@ if (Sys.info()[4][[1]] == "TURBO-PC-WESTER"){
 NotRemove <- c("dataInterestMACE", "includedPatientData", "data", "MACEdefinition", 
                "pValues", "univariateResults", "pathStart", "gsea_results", 
                "kruskal_results", "kruskal_results_post_hoc", "kruskal_resultsCluster", 
-               "dataPatientXProteinRiskClusterMICE", "NotRemove", "dataUnprocessed", "dataRiskFactors")
+               "dataPatientXProteinRiskClusterMICE", "NotRemove", "dataUnproccesed", "dataRiskFactors")
 
 ### prep 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/ImportAndPrep.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/ImportAndPrep.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
 ### LOD
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/LODhistogram.R"))
-rm(list=ls()[! ls() %in% c(NotRemove, "dataUnproccesed")])
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/LODhistogram.R"))
+rm(list=ls()[! ls() %in% c(NotRemove)])
 
 ### Clusters 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/ClusterAssociation.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/ClusterAssociation.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
 ### Symptoms
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/SymptomsAssociationAndNEFL.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/SymptomsAssociationAndNEFL.R"))
 rm(list=ls()[! ls() %in% NotRemove])
-
 
 ### MACE analysis 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/Table1AndConfounders.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/Table1AndConfounders.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/CoxRegressionUniAndMulti.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/CoxRegressionUniAndMulti.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/CorrelationPlotting.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/CorrelationPlotting.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/ForestPlots.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/ForestPlots.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/InteractionMaceProteinAndSex.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/InteractionMaceProteinAndSex.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/GSEApathwayAnalysis.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/GSEApathwayAnalysis.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
-source(paste0(pathStart, "Pipeline1/GitHub/ScriptFinal/ROCbootstrapedKaplanMeierEstimator.R"))
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/ROCbootstrapedKaplanMeierEstimator.R"))
 rm(list=ls()[! ls() %in% NotRemove])
 
-
+source(paste0(pathStart, "StudentAssistentWork/ResearchCompendium/ProteomicsBiomarkerRepCo/R/StratisfiedKaplanMeijerPlots.R"))
+rm(list=ls()[! ls() %in% NotRemove])
 
 
