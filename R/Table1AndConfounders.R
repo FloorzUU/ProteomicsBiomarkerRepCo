@@ -46,9 +46,9 @@ library(corrplot)         # version 0.92
 
 
 ### selecting the patient data to included 
-orderedMACECol <- c("MACE", "Age", "Sex", "BMI", "Hypertension1",
+orderedMACECol <- c("eventMACE", "Age", "Sex", "BMI", "Hypertension1",
                     "SmokerCurrent", "DM.composite", "creat", "GFR_MDRD", "LDL", "HDL", 
-                    "totalchol", "hb", "Stroke_history", "CAD_history", "PAOD", "Symptoms.4g", "Med.statin.derived")
+                    "totalchol", "hb", "Stroke_history", "CAD_history", "PAOD", "risk614", "Symptoms.4g", "Med.statin.derived")
 patientDataMACE <- dataInterestMACE[ ,orderedMACECol]
 
 # display data in moderate and severe grouped
@@ -57,7 +57,7 @@ patientDataMACE[patientDataMACE$Symptoms.4g %in% c("0", "1"), "Symptoms.2g"] <- 
 
 # exclude 
 patientDataMACE <- patientDataMACE[ ,!colnames(patientDataMACE) %in% 
-                                   c("Symptoms.4g", "risk614", "ht", "homocys", "systolic", "diastoli")]
+                                   c("Symptoms.4g", "ht", "homocys", "systolic", "diastoli")]
 
 # Setting data types
 patientDataMACE$MACE <- factor(patientDataMACE$MACE, levels = c(0, 1), labels = c("No MACE","MACE"))
@@ -77,6 +77,7 @@ patientDataMACE$hb <- as.numeric(patientDataMACE$hb)
 patientDataMACE$CAD_history <- factor(patientDataMACE$CAD_history, levels = c(1, 0), labels = c("yes", "no"))
 patientDataMACE$Stroke_history <- factor(patientDataMACE$Stroke_history, levels = c(1, 0), labels = c("yes", "no"))
 patientDataMACE$Med.statin.derived <- factor(patientDataMACE$Med.statin.derived, levels = c(1, 0), labels = c("yes", "no"))
+patientDataMACE$risk614 <- factor(patientDataMACE$risk614, levels = c(1, 0), labels = c("yes", "no"))
 
 # Setting labels  
 label(patientDataMACE$Age) <- "Age (years)"
@@ -94,7 +95,8 @@ label(patientDataMACE$PAOD) <- "Peripheral arterial occlusive disease"
 label(patientDataMACE$totalchol) <- "Total cholesterol level (mmol/L)"
 label(patientDataMACE$LDL) <- "LDL (mmol/L)"
 label(patientDataMACE$HDL) <- "HDL (mmol/L)"
-label(patientDataMACE$Med.statin.derived) <- "Statin"
+label(patientDataMACE$Med.statin.derived) <- "Statin use"
+label(patientDataMACE$risk614) <- "Hypercholesterolemia"
 
 caption = "Table 1: Baseline charateristics of 429 patients included grouped by MACE"
 footnote = "Data are presented as n (%), mean ± standard deviation, or number patients (percentage patients). 
@@ -150,11 +152,11 @@ pvalue <- function(x, ...) {
   c(sub("<", "&lt;", format.pval(p, digits=3, eps=0.001)))
 }
 
-table1(~.|MACE , data = patientDataMACE, caption=caption, footnote=footnote, 
+table1(~.|eventMACE , data = patientDataMACE, caption=caption, footnote=footnote, 
        render.continuous=my.render.cont, render.categorical=my.render.cat, 
        extra.col=list(`P-value`=pvalue), topclass="Rtable1-zebra", overall=F)
 
-tableLatex <- table1(~.|MACE , data = patientDataMACE, caption=caption, footnote=footnote, 
+tableLatex <- table1(~.|eventMACE , data = patientDataMACE, caption=caption, footnote=footnote, 
                      render.continuous=my.render.cont, render.categorical=my.render.cat, 
                      extra.col=list(`P-value`=pvalue), topclass="Rtable1-zebra", overall=F)
 tableLatex <- kable(tableLatex, format = "latex", booktabs = TRUE)  #adjusments are still required 
