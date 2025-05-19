@@ -6,146 +6,134 @@
 # the ROC curves were averaged and interpolated 
 # A curve was given for an estimate with just the risk factors 
 # another with risk factors and the proteins added
-# p.values were calulated with a paired t.test and the roc plots are stored per 
+# p.values were caluclated with timeROC compare function 
 # protein 
 # This analysis was performed for all univariatly significant proteins (FDR < 0.05)
 #
 # Required input:
 # - dataInterestMACE
-# - pValues
+# - univariateResults
 #
 # Resulting output:
-# - averaged ROC curves for all included proteins 
-# - a table in latex format showing the outcomes
+# - plot with top n protein timeROC AUC mean and 95% CI interval at time point indicated
+# - results dataframe with timeROC calculates AUC for each univariately significant proteins
 
 ###
 
 
 ### Required libraries 
+library(timeROC)
+library(survival)
+library(pROC)
+library(splitTools)
+library(ggplot2) 
 
+# approach insprired by https://datascienceplus.com/time-dependent-roc-for-survival-prediction-models-in-r/?
 
-library(prodlim)      # version 2023.03.31
-#library(timereg)
-library(pec)          # version 2023.04-12
-library(timeROC)      # version 0.4
-library(rms)          # version 6.7-1
-library(survival)     # version 3.3-1
-library(Matrix)       # version 1.6-1.1
-library(polspline)    # version 1.1.24
-#library(pROC)         
-library(glmnet)       # version 4.1-8 
-library(kableExtra)   # version 1.3.4
+time_points <- c(2.99)
+n <- 34
 
-AUCresultsProtein <- data.frame()
-proteins <- rownames(pValues[pValues$Univariate < 0.05, ])
-for(protein in proteins){
-  num_bootstrap <- 1000
-  AUC <- c()
-  AUCprotein <- c()
-  TPprotein <- data.frame(matrix(data = NA, nrow = dim(dataInterestMACE)[1], ncol = num_bootstrap))
-  FP <- data.frame(matrix(data = NA, nrow = dim(dataInterestMACE)[1], ncol = num_bootstrap))
-  TP <- data.frame(matrix(data = NA, nrow = dim(dataInterestMACE)[1], ncol = num_bootstrap)) 
-  
-  #interpolated values
-  x_values <- seq(0, 1, 1/300)
-  TPapproxProtein <- data.frame(matrix(data = NA, nrow = length(x_values), ncol = num_bootstrap))
-  TPapprox <- data.frame(matrix(data = NA, nrow = length(x_values), ncol = num_bootstrap))
-  
-  x <- summary(coxph(as.formula(paste('Surv(timeMACE, eventMACE)~', protein, sep = "")), data = dataInterestMACE))[7][[1]][1]
-  
-  for (i in 1:num_bootstrap){
-    bootstrap_sample <- sample(1:dim(dataInterestMACE)[1], replace = TRUE)
-    
-    if (x > 0){
-      ROCtimeCoxProtein <- timeROC(T=dataInterestMACE[bootstrap_sample,"timeMACE"], 
-                                   delta=dataInterestMACE[bootstrap_sample, "eventMACE"],
-                                   marker=dataInterestMACE[bootstrap_sample, protein],
-                                   cause=1,
-                                   weighting="marginal",
-                                   other_markers= as.matrix(dataInterestMACE[bootstrap_sample,
-                                                                         c("GFR_MDRD", "creat", "HDL", "LDL", "DM.composite", "hb", "Age", "Sex")]),
-                                   times=c(2.99) ,ROC=TRUE, iid = TRUE) 
-    } else {
-      ROCtimeCoxProtein <- timeROC(T=dataInterestMACE[bootstrap_sample,"timeMACE"], 
-                                   delta=dataInterestMACE[bootstrap_sample, "eventMACE"],
-                                   marker=-dataInterestMACE[bootstrap_sample, protein],
-                                   cause=1,
-                                   weighting="marginal",
-                                   other_markers= as.matrix(dataInterestMACE[bootstrap_sample,
-                                                                         c("GFR_MDRD", "creat", "HDL", "LDL", "DM.composite", "hb", "Age", "Sex")]),
-                                   times=c(2.99),ROC=TRUE, iid = TRUE) 
-    }
-    FPprotein[1:length(ROCtimeCoxProtein[["FP"]][ ,2]),i] <- ROCtimeCoxProtein[["FP"]][ ,2]
-    TPprotein[1:length(ROCtimeCoxProtein[["TP"]][ ,2]),i] <- ROCtimeCoxProtein[["TP"]][ ,2]
-    AUCprotein <- c(AUCprotein, ROCtimeCoxProtein[["AUC"]][2])
-    
-    ROCtimeCox <- timeROC(T=dataInterestMACE[bootstrap_sample,"timeMACE"], 
-                          delta=dataInterestMACE[bootstrap_sample, "eventMACE"],
-                          marker=-dataInterestMACE[bootstrap_sample, "GFR_MDRD"],
-                          cause=1,
-                          weighting="marginal",
-                          other_markers=as.matrix(dataInterestMACE[bootstrap_sample,
-                                                               c("creat", "HDL", "LDL", "DM.composite", "hb", "Age", "Sex")]),
-                          times=c(2.9),ROC=TRUE, iid = TRUE) 
-    AUC <- c(AUC, ROCtimeCox[["AUC"]][2])
-    FP[1:length(ROCtimeCox[["FP"]][ ,2]),i] <- ROCtimeCox[["FP"]][ ,2]
-    TP[1:length(ROCtimeCox[["TP"]][ ,2]),i] <- ROCtimeCox[["TP"]][ ,2]
-    
-    # interpolation 
-    TPapproxProtein[ ,i] <- approx(ROCtimeCoxProtein[["FP"]][ ,2], 
-                                   ROCtimeCoxProtein[["TP"]][ ,2], xout = x_values)$y
-    TPapprox[ ,i] <- approx(ROCtimeCox[["FP"]][ ,2], 
-                            ROCtimeCox[["TP"]][ ,2], xout = x_values)$y
-  }
-  # Calculate mean values at each point
-  meanValuesProtein <- rowMeans(data.frame(TPapproxProtein), na.rm = FALSE)
-  meanValues <- rowMeans(data.frame(TPapprox), na.rm = FALSE)
-  
-  # Calculate confidence intervals
-  lowerCIProtein<- apply(TPapproxProtein, 1, function(x) quantile(x, 0.025))
-  upperCIProtein <- apply(TPapproxProtein, 1, function(x) quantile(x, 0.975))
-  lowerCI<- apply(TPapprox, 1, function(x) quantile(x, 0.025))
-  upperCI <- apply(TPapprox, 1, function(x) quantile(x, 0.975))
-  
-  # Plot individual lines with inconsistent points
-  pdf(file = paste(resultsFolder, "ROCproteinAndRisk/",protein,".pdf", sep = ""), width = 4.5, height = 4.5)
-  par(mar = c(4,4,1,1))
-  plot(x_values, meanValues, type = "l", col = "black", lwd = 2, xlab = "1-Specificity", ylab = "Sensitivity")
-  lines(x_values, meanValuesProtein, type = "l", col = "red", lwd = 2)
-  legend(x = "bottomright", 
-         legend = c("Riskfactors + protein", 
-                    paste("Mean AUC:", signif(mean(AUCprotein), 3)),
-                    "Riskfactors", 
-                    paste("Mean AUC:", signif(mean(AUC), 3))),
-         col = c("red", "white", "black", "white"), lty=1, cex=0.8, bty = "n")
-  title(data[data$OlinkID == protein, "Assay"][[1]][1])
-  
-  # Shade the area between confidence intervals
-  polygon(c(x_values, rev(x_values)), c(lowerCI, rev(upperCI)), col = rgb(0,0,0, alpha = 0.2), border = NA)
-  polygon(c(x_values, rev(x_values)), c(lowerCIProtein, rev(upperCIProtein)), col = rgb(0.8, 0.2, 0.2, alpha = 0.2), border = NA)
-  
-  AUCresultsProtein[protein, "mean"] <- mean(AUCprotein)
-  AUCresultsProtein[protein, "CI-lower"] <- quantile(AUCprotein, 0.025)
-  AUCresultsProtein[protein, "CI-upper"] <- quantile(AUCprotein, 0.975)
-  AUCresultsProtein[protein, "Assay"] <- data[data$OlinkID == protein, "Assay"][[1]][1]
-  
-  AUCresultsProtein[protein, "p.value"] <- t.test(AUC, AUCprotein, alternative = "less", paired = TRUE)$p.value
-  AUCresultsProtein[protein, "estimate"] <- t.test(AUC, AUCprotein, alternative = "less", paired = TRUE)$estimate
-  AUCresultsProtein[protein, "CI upper"] <- t.test(AUC, AUCprotein, alternative = "less", paired = TRUE)$conf.int[1:2][2]
-  
-  AUCresultsProtein[protein, "mean risk"] <- mean(AUC)
-  AUCresultsProtein[protein, "CI-lower risk"] <- quantile(AUC, 0.025)
-  AUCresultsProtein[protein, "CI-upper risk"] <- quantile(AUC, 0.975)
-  
-  save(AUCresultsProtein, file = paste(resultsFolder, "ROCproteinAndRisk/AUCresultsProtein.RData", sep = ""))
-  dev.off()
+### calculate timeROC - for risk, risk + protein and only single proteins
+# only for univariately significant ones
+
+data <- dataInterestMACE
+proteins <- univariateProteins
+results <- data.frame(matrix(data = NA, nrow = length(proteins)+1, ncol = 8))
+colnames(results) <- c("protein: AUC",
+                       "protein: AUC lower CI",
+                       "protein: AUC upper CI",
+                       "protein + risk: AUC",
+                       "protein + risk: AUC lower CI",
+                       "protein + risk: AUC upper CI",
+                       "p-value",
+                       "adjusted p-value")
+rownames(results) <- c("risk.only", proteins)
+
+model.risk <- coxph(Surv(timeMACE, eventMACE) ~ GFR_MDRD + creat + HDL + LDL + DM.composite + hb + Age + Sex, data = data)
+pred.risk <- predict(model.risk, type = "lp")
+roc.risk <- timeROC(T = data$timeMACE,
+                    delta = data$eventMACE,
+                    marker = pred.risk,
+                    cause = 1,
+                    weighting = "marginal",
+                    times = time_points,
+                    ROC = TRUE,
+                    iid = TRUE)
+results["risk.only", c("protein + risk: AUC", "protein + risk: AUC lower CI", "protein + risk: AUC upper CI")] <- c(round(roc.risk$AUC[2], digits = 3),
+                                                                                                                  confint(roc.risk, level = 0.95, n.sim = 1000)$CI_AUC[1:2]/100)
+
+for (protein in proteins){
+  model.risk.protein <- coxph(as.formula(paste("Surv(timeMACE, eventMACE) ~", protein, "+ GFR_MDRD + creat + HDL + LDL + DM.composite + hb + Age + Sex")), data = data)
+  pred.risk.protein <- predict(model.risk.protein, type = "lp")
+  roc.risk.protein <- timeROC(T = data$timeMACE,
+                 delta = data$eventMACE,
+                 marker = pred.risk.protein,
+                 cause = 1,
+                 weighting = "marginal",
+                 times = time_points,
+                 ROC = TRUE,
+                 iid = TRUE) 
+  confint(roc.risk.protein, level = 0.95, n.sim = 1000)$CI_AUC[1:2]
+  results[protein, c("protein + risk: AUC", "protein + risk: AUC lower CI", "protein + risk: AUC upper CI")] <- c(round(roc.risk.protein$AUC[2], digits = 3),
+                                                                                             confint(roc.risk.protein, level = 0.95, n.sim = 1000)$CI_AUC[1:2]/100)
+
+  results[protein, "p-value"] <- compare(roc.risk.protein, roc.risk)$p_values_AUC[2]  # calculate significant differences in risk.only and riskfactors+single protein models 
+
+  model.protein <- coxph(as.formula(paste("Surv(timeMACE, eventMACE) ~", protein)), data = data)
+  pred.protein <- predict(model.protein, type = "lp")
+  roc.protein <- timeROC(T = data$timeMACE,
+                 delta = data$eventMACE,
+                 marker = pred.protein,
+                 cause = 1,
+                 weighting = "marginal",
+                 times = time_points,
+                 ROC = TRUE,
+                 iid = TRUE)
+
+  results[protein, c("protein: AUC", "protein: AUC lower CI", "protein: AUC upper CI")] <- c(round(roc.protein$AUC[2], digits = 3),
+                                                                                             confint(roc.protein, level = 0.95, n.sim = 1000)$CI_AUC[1:2]/100)
 }
+ 
+### plot results (mean AUC and 95% CI for top n protein measurements)
+results$protein <- c("risk.only", univariateResults[proteins, "Assay"])
+results <- results[order(results$`protein + risk: AUC`, decreasing = TRUE), ]
+color <- c(rep("#9B8EDA", n), "#6699FF")
+ 
+# create dataframe used as subset to visualize in plot
+df <- results[1:n, ]
+df[n+1, ] <- results["risk.only", ]
 
-# preparing table making 
-AUCtable <- AUCresultsProtein
-AUCtable$mean <- paste(signif(AUCresultsProtein$mean, 4), "(", signif(AUCresultsProtein$`CI-lower`, 4), "-", signif(AUCresultsProtein$`CI-upper`, 4), ")")
-AUCtable$meanW <- paste(signif(AUCresultsProtein$`mean risk`, 4), "(", signif(AUCresultsProtein$`CI-lower risk`, 4), "-", signif(AUCresultsProtein$`CI-upper risk`, 4), ")")
-AUCtable$estimate <- AUCtable$estimate*-1
-AUCtable$p.value.adjusted <- p.adjust(AUCtable$p.value)
-AUCtable <- AUCtable[AUCtable$p.value.adjusted < 0.05, ]
-kable(AUCtable[ ,c("Assay", "mean", "meanW", "estimate", "p.value", "p.value.adjusted")], format = "latex")
+df$protein<- factor(df$protein, levels = make.unique(as.vector(df$protein)))
+df$n <- 1:nrow(df) # preserve original order 
+
+plotAUC <- ggplot(df) +
+  # First set (shift slightly left)
+  geom_point(aes(x = n - 0.1, y = `protein + risk: AUC`),
+             size = 2, alpha = 0.75, color = color) +
+  geom_errorbar(aes(x = n - 0.1,
+                    ymin = `protein + risk: AUC lower CI`,
+                    ymax = `protein + risk: AUC upper CI`),
+                width = 0.1, color = color) +
+
+  # Second set (centered or right)
+  geom_point(aes(x = n + 0.1 , y = `protein: AUC`),
+             size = 2, alpha = 0.75, color = "#52B6A8") +
+  geom_errorbar(aes(x = n + 0.1,
+                    ymin = `protein: AUC lower CI`,
+                    ymax = `protein: AUC upper CI`),
+                width = 0.1, color = "#52B6A8") + 
+  scale_y_continuous(limits = c(0.5, 1), breaks = seq(0.5, 1, 0.05)) +
+  scale_x_continuous(breaks = as.numeric(df$n), labels = df$protein) +
+  labs(title = "AUC with 95% Confidence Intervals by Protein",
+       x = "Protein", y = "AUC") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(face = "bold"))
+
+plotAUC
+
+ 
+
+ 
+
+ 
